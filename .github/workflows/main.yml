@@ -1,6 +1,6 @@
 name: Run
-
-on:
+/*
+于:
 
   # UTC时间，+8小时=北京时间，对应Beijing时间 9：01
   schedule:
@@ -22,4 +22,4 @@ jobs:
       with:
         run: dotnet Program.cs
       env: 
-        CONF: ${{ secrets.CONF }}
+        CONF: ${{ secrets.CONF }}*/
