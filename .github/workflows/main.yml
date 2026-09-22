@@ -1,13 +1,11 @@
 name: Run
-/*
-于:
 
-  # UTC时间，+8小时=北京时间，对应Beijing时间 9：01
-  schedule:
-      - cron: "8 1 * * *"
+on:
+    workflow_dispatch:
+    schedule:
+        - cron: "8 1 * * *"
 
   workflow_dispatch:
-  repository_dispatch:
 
 jobs:
   build:
@@ -22,4 +20,4 @@ jobs:
       with:
         run: dotnet Program.cs
       env: 
-        CONF: ${{ secrets.CONF }}*/
+        CONF: ${{ secrets.CONF }}
