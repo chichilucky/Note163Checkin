@@ -1,8 +1,8 @@
 ﻿#:property Nullable=disable
 #:property PublishAot=false
 
-#:package PuppeteerSharp@25.3.3
-#:package StackExchange.Redis@3.0.17
+#:package PuppeteerSharp@20.2.2
+#:package StackExchange.Redis@2.9.11
 
 using PuppeteerSharp;
 using StackExchange.Redis;
@@ -11,12 +11,7 @@ using System.Text.Json;
 
 const int TIMEOUT_MS = 60_000;
 
-string confStr = GetEnvValue("CONF");
-if (File.Exists(confStr))
-{
-    confStr = await File.ReadAllTextAsync(confStr);
-}
-Conf _conf = Deserialize<Conf>(confStr);
+Conf _conf = Deserialize<Conf>(GetEnvValue("CONF"));
 HttpClient _scClient = new();
 
 #region redis
@@ -56,7 +51,7 @@ for (int i = 0; i < _conf.Users.Length; i++)
             var redisValue = await db.StringGetAsync(redisKey);
             if (redisValue.HasValue)
             {
-                cookie = redisValue.ToString().Trim();
+                cookie = redisValue.ToString();
                 (isInvalid, result) = await IsInvalid(cookie);
                 Console.WriteLine("redis获取cookie,状态:{0}", isInvalid ? "无效" : "有效");
             }
@@ -69,14 +64,14 @@ for (int i = 0; i < _conf.Users.Length; i++)
             Console.WriteLine("login获取cookie,状态:{0}", isInvalid ? "无效" : "有效");
             if (isInvalid)
             {//Cookie失效
-                await Notify($"{title}Cookie失效，请检查登录状态！", true);
+                await Notify($"{title}Cookie失效，请检查登录状态！原因:{result}", true);
                 continue;
             }
         }
 
         if (isRedis)
         {
-            Console.WriteLine($"redis更新cookie:{await db.StringSetAsync(redisKey, cookie.Trim())}");
+            Console.WriteLine($"redis更新cookie:{await db.StringSetAsync(redisKey, cookie)}");
         }
     }
 
@@ -131,7 +126,7 @@ async Task<string> GetCookie(User user)
     {
         Headless = false,
         DefaultViewport = null,
-        ExecutablePath = GetEnvValue("GITHUB_ACTIONS") == "true" ? @"/usr/bin/google-chrome" : _conf.ChromePath
+        ExecutablePath = @"/usr/bin/google-chrome"
     };
     var browser = await Puppeteer.LaunchAsync(launchOptions);
     IPage page = await browser.DefaultContext.NewPageAsync();
@@ -207,7 +202,8 @@ async Task Notify(string msg, bool isFailed = false)
         int index = scKey.IndexOf(' ');
         if (index == -1)
         {
-            await _scClient.GetAsync($"https://sc.ftqq.com/{scKey}.send?text={msg}");
+            await _scClient.GetAsync($"https://sctapi.ftqq.com/{scKey}.send?title=有道云笔记签到&desp={msg}");
+            //await _scClient.GetAsync($"https://sc.ftqq.com/{scKey}.send?text={msg}");
         }
         else
         {
@@ -298,7 +294,6 @@ class Conf
     public string ScType { get; set; }
     public string RdsServer { get; set; }
     public string RdsPwd { get; set; }
-    public string ChromePath { get; set; } = @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe";
     public string LoginUrl { get; set; } = "https://note.youdao.com/mobileSignIn/login_mobile.html?&back_url=https://note.youdao.com/web/&from=web";
     public string LoginStr { get; set; } = "signIn";
     public string JsUrl { get; set; } = "https://github.com/BlueHtml/pub/raw/main/code/js/note163login.js";
